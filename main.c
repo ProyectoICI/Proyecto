@@ -12,6 +12,8 @@ typedef struct Edge Edge;  // Forward declaration of Edge
 // -- TODO: Modificar el informe porque está cambiada la entidad
 // - Paradero, -Graph
 
+//
+
 typedef struct Horario {
     char numeroBus[50];
     char tiempoLlegada[6];
