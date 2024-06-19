@@ -4,6 +4,7 @@
 # REPLIT FILES
 *.replit
 *.nix
+*.ccls-cache
 
 # Prerequisites
 *.d
