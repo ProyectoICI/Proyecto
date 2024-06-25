@@ -110,13 +110,13 @@ void cargarUsuarios(Map *usuarios)
     while((campos = leer_linea_csv(archivo, ',')) != NULL) {
         Usuario *usuario = (Usuario*)malloc(sizeof(Usuario));
         strcpy(usuario->nombre, campos[0]);
-        
+
         if (strcmp(campos[2], "1") == 0) {
             usuario->esAdmin = true;
         } else {
             usuario->esAdmin = false;
         }
-            
+
 
         map_insert(usuarios, usuario->nombre, usuario);
     }
@@ -124,7 +124,11 @@ void cargarUsuarios(Map *usuarios)
 }
 
 void agregarParadero(Graph *grafo){
+<<<<<<< HEAD
+
+=======
     
+>>>>>>> 0f81007f1ad7bf741093b9a10462558c95ac7a2e
 }
 
 void MenuAdmin()
@@ -134,7 +138,7 @@ void MenuAdmin()
         MostrarMenuAdmin();
         printf("\nIngrese su opción: ");
         scanf(" %c", &opcion);
-        
+
         switch (opcion)
         {
             case '1':
@@ -150,7 +154,7 @@ void MenuAdmin()
                 }
                 break;
             }
-            
+
             case '2':
             {
                 MostrarMenuBuses();
@@ -243,6 +247,15 @@ void ingresoSesion(Map *usuarios) {
     printf("========================================\n");
     printf("\033[1mIniciar Sesión\033[0m\n");
     printf("========================================\n");
+<<<<<<< HEAD
+
+    printf("Ingrese su usuario: ");
+    scanf("%49s", usuario); // Limitar la entrada para evitar errores
+
+    printf("Ingrese su contraseña: ");
+    scanf("%49s", contrasena); // Limitar la entrada para evitar errores
+
+=======
     
     printf("Ingrese su usuario: ");
     scanf("%49s", usuario); // Limitar la entrada para evitar errores
@@ -250,6 +263,7 @@ void ingresoSesion(Map *usuarios) {
     printf("Ingrese su contraseña: ");
     scanf("%49s", contrasena); // Limitar la entrada para evitar errores
     
+>>>>>>> 0f81007f1ad7bf741093b9a10462558c95ac7a2e
     int aux = 0;
 
     while(true) {
@@ -280,7 +294,11 @@ void ingresoSesion(Map *usuarios) {
                 aux++;
 
             }
+<<<<<<< HEAD
+
+=======
             
+>>>>>>> 0f81007f1ad7bf741093b9a10462558c95ac7a2e
 
         } else if (aux >= 2) {
             printf("\n\033[1mDebe registrarse primero\033[0m\n");
@@ -288,12 +306,12 @@ void ingresoSesion(Map *usuarios) {
             presioneTeclaParaContinuar();
             limpiarPantalla();
             return;
-        
+
         } else {
             printf("\nIntente con un usuario ya registrado:\n");
             printf("Intentos permitidos: %d\n", 2 - aux);
             scanf("%49s", usuario);
-            
+
             aux++;
         }
     }
@@ -343,7 +361,7 @@ void mostrarIngreso() {
         printf("1) Iniciar Sesión\n");
         printf("2) Registrarse\n");
         printf("3) Salir\n");
-        
+
         scanf(" %d", &opcion);
 
         switch (opcion) {
