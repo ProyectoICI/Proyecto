@@ -66,6 +66,36 @@ int is_equal_str(void *key1, void *key2) {
   return strcmp((char *)key1, (char *)key2) == 0;
 }
 
+// Function prototype
+bool checkPassword(const char *username, const char *password, const char *filePath) {
+    FILE *file = fopen(filePath, "r");
+    if (!file) {
+        perror("Error opening file");
+        return false;
+    }
+
+    char line[1024];
+    while (fgets(line, sizeof(line), file)) {
+        // Remove newline character from fgets input
+        line[strcspn(line, "\n")] = 0;
+
+        char *token = strtok(line, ",");
+        if (strcmp(token, username) == 0) {
+            token = strtok(NULL, ",");
+            if (strcmp(token, password) == 0) {
+                fclose(file);
+                return true; // Username and password match
+            }
+            break; // Username found but password does not match
+        }
+    }
+
+    fclose(file);
+    return false; // Username not found or password does not match
+}
+
+
+
 void cargarUsuarios(Map *usuarios)
 {
     FILE* archivo = fopen("usuarios.csv", "r");
@@ -93,6 +123,9 @@ void cargarUsuarios(Map *usuarios)
     fclose(archivo);    
 }
 
+void agregarParadero(Graph *grafo){
+    
+}
 
 void MenuAdmin()
 {
@@ -109,7 +142,7 @@ void MenuAdmin()
                 MostrarMenuParaderos();
                 scanf(" %c", &opcion);
                 if (opcion == '1') {
-                    //agregarParadero();
+                    //agregarParadero(mapaParaderos);
                 } else if (opcion == '2') {
                     //editarParadero();
                 } else if (opcion == '3') {
@@ -150,9 +183,9 @@ void MenuAdmin()
             {
                 MostrarMenuOtros();
                 scanf(" %c", &opcion);
-                
-                // if (opcion == '1')
+                if (opcion == '1') {
                     //generarReporte();
+                }
                 break;
             }
             default:
@@ -201,37 +234,53 @@ void MenuUsuario() {
     } while (opcion != '3');
 }
 
+
+
+
 void ingresoSesion(Map *usuarios) {
     char usuario[50];
     char contrasena[50];
     printf("========================================\n");
     printf("\033[1mIniciar Sesión\033[0m\n");
     printf("========================================\n");
+    
     printf("Ingrese su usuario: ");
     scanf("%49s", usuario); // Limitar la entrada para evitar errores
+    
     printf("Ingrese su contraseña: ");
     scanf("%49s", contrasena); // Limitar la entrada para evitar errores
     
-
-    
     int aux = 0;
-    
+
     while(true) {
         MapPair *pair = map_search(usuarios, usuario);
         if (pair != NULL) {
-            limpiarPantalla();
-            printf("========================================\n");
-            printf("   \033[1mSISTEMA DE BUSES\033[0m\n");
-            printf("========================================\n");
-            Usuario *usuarioEnc  = pair->value;
-            if (usuarioEnc->esAdmin == true) {
+            if (checkPassword(usuario, contrasena, "usuarios.csv")) {
                 limpiarPantalla();
-                MenuAdmin();
+                printf("========================================\n");
+                printf("   \033[1mSISTEMA DE BUSES\033[0m\n");
+                printf("========================================\n");
+                Usuario *usuarioEnc  = pair->value;
+                if (usuarioEnc->esAdmin == true) {
+                    limpiarPantalla();
+                    MenuAdmin();
+                } else {
+                    limpiarPantalla();
+                    MenuUsuario();
+                }
+                break;
+
             } else {
-                limpiarPantalla();
-                MenuUsuario();
+                printf("La contraseña ingresada es incorrecta.\n");
+                printf("Intentos permitidos: %d\n", 2 - aux);
+                scanf("%49s", contrasena);
+                if (aux == 1) {
+                    return;
+                }
+                aux++;
+
             }
-            break;
+            
 
         } else if (aux >= 2) {
             printf("\n\033[1mDebe registrarse primero\033[0m\n");
@@ -250,8 +299,7 @@ void ingresoSesion(Map *usuarios) {
     }
 }
 
-/* TODO: Ver si se puede implementar salting*/
-
+/* TODO: Ver si se puede implementar salting (Proteger las contraseñas en el CSV con una liberia)*/
 void registroUsuario(Map *usuarios) {
     printf("Registro de usuario\n");
     char nombre[50];
@@ -297,31 +345,7 @@ void mostrarIngreso() {
         printf("3) Salir\n");
         
         scanf(" %d", &opcion);
-        
-        /* NO LO QUISE BORRAR PORQUE NO LO ENTENDÍ :)
 
-
-        fgets(input, sizeof(input), stdin);
-        printf("\n");
-
-        if (strlen(input) > 0 && input[strlen(input) - 1] == '\n') {  // Eliminar el salto de línea
-            input[strlen(input) - 1] = '\0'; // Eliminar el salto de línea
-        }
-
-        isNumber = 1;
-        for (int i = 0; i < strlen(input); i++) // Verificar si es un número
-            if (!isdigit(input[i])) { // Si no es un número
-                isNumber = 0; // No es un número
-                break; // Salir del bucle
-            }
-
-        if (isNumber) opcion = atoi(input); // Convertir la entrada a un número
-
-        if (!isNumber || opcion < 1 || opcion > 3) {
-            printf("Opcion invalida, ingrese una opción válida\n");
-        }
-        while (!isNumber || opcion < 1 || opcion > 3);
-         */
         switch (opcion) {
             case 1:
                 limpiarPantalla();
@@ -342,6 +366,9 @@ void mostrarIngreso() {
 }
 
 int main() {
+    Map *mapParaderos = map_create(is_equal_str);
     mostrarIngreso();
+
+    map_clean(mapParaderos); 
     return 0;
 }
