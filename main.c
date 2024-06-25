@@ -123,13 +123,6 @@ void cargarUsuarios(Map *usuarios)
     fclose(archivo);    
 }
 
-void agregarParadero(Graph *grafo){
-<<<<<<< HEAD
-
-=======
-    
->>>>>>> 0f81007f1ad7bf741093b9a10462558c95ac7a2e
-}
 
 void MenuAdmin()
 {
@@ -247,23 +240,13 @@ void ingresoSesion(Map *usuarios) {
     printf("========================================\n");
     printf("\033[1mIniciar Sesión\033[0m\n");
     printf("========================================\n");
-<<<<<<< HEAD
 
-    printf("Ingrese su usuario: ");
-    scanf("%49s", usuario); // Limitar la entrada para evitar errores
-
-    printf("Ingrese su contraseña: ");
-    scanf("%49s", contrasena); // Limitar la entrada para evitar errores
-
-=======
-    
     printf("Ingrese su usuario: ");
     scanf("%49s", usuario); // Limitar la entrada para evitar errores
     
     printf("Ingrese su contraseña: ");
     scanf("%49s", contrasena); // Limitar la entrada para evitar errores
-    
->>>>>>> 0f81007f1ad7bf741093b9a10462558c95ac7a2e
+
     int aux = 0;
 
     while(true) {
@@ -294,11 +277,6 @@ void ingresoSesion(Map *usuarios) {
                 aux++;
 
             }
-<<<<<<< HEAD
-
-=======
-            
->>>>>>> 0f81007f1ad7bf741093b9a10462558c95ac7a2e
 
         } else if (aux >= 2) {
             printf("\n\033[1mDebe registrarse primero\033[0m\n");
