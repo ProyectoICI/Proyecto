@@ -8,10 +8,9 @@ void MostrarMenuAdmin() {
   printf("\n2) Buses");
   printf("\n3) Rutas");
   printf("\n4) Otros");
-  printf("\n5) Salir");
+  printf("\n5) Salir"); 
   printf("\n========================================");
 }
-
 
 void MostrarMenuParaderos() {
   printf("========================================");
@@ -21,7 +20,7 @@ void MostrarMenuParaderos() {
   printf("\n2) Editar Paradero");
   printf("\n3) Listar Paraderos");
   printf("\n4) Salir");
-  printf("\n========================================");
+  printf("\n========================================\n");
 }
 
 void MostrarMenuBuses() {
@@ -56,8 +55,7 @@ void MostrarMenuOtros() {
 }
 
 
-
-//Menu Usuarios
+//----------------Menu Usuarios----------------------------
 
 void MostrarMenuUsuarios() {
   printf("========================================");

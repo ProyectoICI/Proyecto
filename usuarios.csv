@@ -1,5 +1,5 @@
-Posicion,Nombre Usuario,Es Admin 
-1,admin,1
-2,usuario,0
-3,dante,1
-
+Nombre Usuario,Contrasena,Es Admin 
+admin,admin,1
+usuario,usuario,0
+dante,dante,1
+hola,hola,0
