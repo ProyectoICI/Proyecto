@@ -1,103 +1,14 @@
 #include "tdas/extra.h"
-#include "tdas/list.h"
-#include "tdas/map.h"
+#include "usuarios.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 #include "menus.h"
 #include "paraderos.h"
 
-#include <stdio.h> // printf
-#include <stdlib.h> // Para usar la función system()
-#include <ctype.h>  // for isdigit
-#include <string.h> // for strlen
-#include <stdbool.h> // for bool
-
-typedef struct Paradero Paradero;  // Forward declaration of Paradero
-typedef struct Edge Edge;  // Forward declaration of Edge
-
-
-// Declaración de entidades
-// -- TODO: Modificar el informe porque está cambiada la entidad
-// - Paradero, -Graph
-
-//
-
-typedef struct Usuario {
-    char nombre[50];
-    bool esAdmin;
-} Usuario;
-
-// -- BUSES -- //
-
-typedef struct Bus {
-    int numeroBus;
-} Bus;
-
-typedef struct Ruta {
-    int busRuta;
-    Paradero* paraderos;
-} Ruta;
-
-
-// -- TODO: Implementar funciones -- //
-
 int is_equal_str(void *key1, void *key2) {
   return strcmp((char *)key1, (char *)key2) == 0;
-}
-
-// Function prototype
-bool checkPassword(const char *username, const char *password, const char *filePath) {
-    FILE *file = fopen(filePath, "r");
-    if (!file) {
-        perror("Error opening file");
-        return false;
-    }
-
-    char line[1024];
-    while (fgets(line, sizeof(line), file)) {
-        // Remove newline character from fgets input
-        line[strcspn(line, "\n")] = 0;
-
-        char *token = strtok(line, ",");
-        if (strcmp(token, username) == 0) {
-            token = strtok(NULL, ",");
-            if (strcmp(token, password) == 0) {
-                fclose(file);
-                return true; // Username and password match
-            }
-            break; // Username found but password does not match
-        }
-    }
-
-    fclose(file);
-    return false; // Username not found or password does not match
-}
-
-
-
-void cargarUsuarios(Map *usuarios)
-{
-    FILE* archivo = fopen("usuarios.csv", "r");
-    if (archivo == NULL) { // Mensaje de error"
-        perror("Error al abrir el archivo de usuarios.csv");
-        return; 
-    }
-
-    char **campos;
-    campos = leer_linea_csv(archivo, ',');
-
-    while((campos = leer_linea_csv(archivo, ',')) != NULL) {
-        Usuario *usuario = (Usuario*)malloc(sizeof(Usuario));
-        strcpy(usuario->nombre, campos[0]);
-        
-        if (strcmp(campos[2], "1") == 0) {
-            usuario->esAdmin = true;
-        } else {
-            usuario->esAdmin = false;
-        }
-            
-
-        map_insert(usuarios, usuario->nombre, usuario);
-    }
-    fclose(archivo);    
 }
 
 void MenuAdmin()
@@ -108,7 +19,7 @@ void MenuAdmin()
         MostrarMenuAdmin();
         printf("\nIngrese su opción: ");
         scanf(" %c", &opcion);
-        
+
         switch (opcion)
         {
             case '1':
@@ -124,7 +35,7 @@ void MenuAdmin()
                 }
                 break;
             }
-            
+
             case '2':
             {
                 MostrarMenuBuses();
@@ -210,6 +121,51 @@ void MenuUsuario() {
 }
 
 
+bool checkPassword(const char *username, const char *password, const char *filePath) {
+    FILE *file = fopen(filePath, "r");
+    if (!file) {
+        perror("Error opening file");
+        return false;
+    }
+
+    char line[1024];
+    while (fgets(line, sizeof(line), file)) {
+        line[strcspn(line, "\n")] = 0;
+        char *token = strtok(line, ",");
+        if (strcmp(token, username) == 0) {
+            token = strtok(NULL, ",");
+            if (strcmp(token, password) == 0) {
+                fclose(file);
+                return true;
+            }
+            break;
+        }
+    }
+
+    fclose(file);
+    return false;
+}
+
+void cargarUsuarios(Map *usuarios) {
+    FILE* archivo = fopen("usuarios.csv", "r");
+    if (archivo == NULL) {
+        perror("Error al abrir el archivo de usuarios.csv");
+        return;
+    }
+
+    char **campos;
+    campos = leer_linea_csv(archivo, ',');
+
+    while((campos = leer_linea_csv(archivo, ',')) != NULL) {
+        Usuario *usuario = (Usuario*)malloc(sizeof(Usuario));
+        strcpy(usuario->nombre, campos[0]);
+
+        usuario->esAdmin = (strcmp(campos[2], "1") == 0);
+        map_insert(usuarios, usuario->nombre, usuario);
+    }
+    fclose(archivo);    
+}
+
 
 
 void ingresoSesion(Map *usuarios) {
@@ -218,13 +174,13 @@ void ingresoSesion(Map *usuarios) {
     printf("========================================\n");
     printf("\033[1mIniciar Sesión\033[0m\n");
     printf("========================================\n");
-    
+
     printf("Ingrese su usuario: ");
-    scanf("%49s", usuario); // Limitar la entrada para evitar errores
-    
+    scanf("%49s", usuario);
+
     printf("Ingrese su contraseña: ");
-    scanf("%49s", contrasena); // Limitar la entrada para evitar errores
-    
+    scanf("%49s", contrasena);
+
     int aux = 0;
 
     while(true) {
@@ -235,8 +191,8 @@ void ingresoSesion(Map *usuarios) {
                 printf("========================================\n");
                 printf("   \033[1mSISTEMA DE BUSES\033[0m\n");
                 printf("========================================\n");
-                Usuario *usuarioEnc  = pair->value;
-                if (usuarioEnc->esAdmin == true) {
+                Usuario *usuarioEnc = pair->value;
+                if (usuarioEnc->esAdmin) {
                     limpiarPantalla();
                     MenuAdmin();
                 } else {
@@ -244,7 +200,6 @@ void ingresoSesion(Map *usuarios) {
                     MenuUsuario();
                 }
                 break;
-
             } else {
                 printf("La contraseña ingresada es incorrecta.\n");
                 printf("Intentos permitidos: %d\n", 2 - aux);
@@ -253,28 +208,22 @@ void ingresoSesion(Map *usuarios) {
                     return;
                 }
                 aux++;
-
             }
-            
-
         } else if (aux >= 2) {
             printf("\n\033[1mDebe registrarse primero\033[0m\n");
             printf("Seleccione la opción 2 del Menú Principal\n");
             presioneTeclaParaContinuar();
             limpiarPantalla();
             return;
-        
         } else {
             printf("\nIntente con un usuario ya registrado:\n");
             printf("Intentos permitidos: %d\n", 2 - aux);
             scanf("%49s", usuario);
-            
             aux++;
         }
     }
 }
 
-/* TODO: Ver si se puede implementar salting (Proteger las contraseñas en el CSV con una liberia)*/
 void registroUsuario(Map *usuarios) {
     printf("Registro de usuario\n");
     char nombre[50];
@@ -294,53 +243,10 @@ void registroUsuario(Map *usuarios) {
 
     FILE* archivo = fopen("usuarios.csv", "a"); 
     if (archivo != NULL) {
-        fprintf(archivo, "%s,%s,%d\n", nuevoUsuario->nombre, contrasena,nuevoUsuario->esAdmin ? 1 : 0);
+        fprintf(archivo, "%s,%s,%d\n", nuevoUsuario->nombre, contrasena, nuevoUsuario->esAdmin ? 1 : 0);
         fclose(archivo);
     } else {
         perror("Error al abrir el archivo de usuarios.csv");
     }
     printf("Usuario registrado con éxito.\n");
-}
-
-void mostrarIngreso() {
-    char input[10];
-    int opcion;
-    int isNumber;
-    Map *MapUsuarios = map_create(is_equal_str);
-    cargarUsuarios(MapUsuarios);
-
-    do
-    {
-        printf("========================================\n");
-        printf("   \033[1mSISTEMA DE BUSES\033[0m\n");
-        printf("========================================\n");
-        printf("\033[0mEscoja una opción:\033[0m\n");
-        printf("1) Iniciar Sesión\n");
-        printf("2) Registrarse\n");
-        printf("3) Salir\n");
-        
-        scanf(" %d", &opcion);
-
-        switch (opcion) {
-            case 1:
-                limpiarPantalla();
-                ingresoSesion(MapUsuarios);
-                break;
-            case 2:
-                limpiarPantalla();
-                registroUsuario(MapUsuarios);
-                break;
-            case 3:
-                printf("\nSaliendo del sistema...\n");
-                break;
-            default:
-                limpiarPantalla();
-                printf("Por favor, ingrese una opción válida.\n");
-            }
-    } while (opcion != 3);
-}
-
-int main() {
-    mostrarIngreso(); 
-    return 0;
 }
