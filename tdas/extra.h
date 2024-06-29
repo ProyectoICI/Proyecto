@@ -39,6 +39,8 @@
  */
 char **leer_linea_csv(FILE *archivo, char separador);
 
+int is_equal_str(void *key1, void *key2);
+
 List *split_string(const char *str, const char *delim);
 
 // Función para limpiar la pantalla

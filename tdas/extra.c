@@ -51,6 +51,10 @@ char **leer_linea_csv(FILE *archivo, char separador) {
   return campos;
 }
 
+int is_equal_str(void *key1, void *key2) {
+    return strcmp((char *)key1, (char *)key2) == 0;
+}
+
 List *split_string(const char *str, const char *delim) {
   List *result = list_create();
   char *token = strtok((char *)str, delim);
