@@ -2,171 +2,300 @@
 #include "../tdas/extra.h"
 #include "../tdas/map.h"
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <sqlite3.h>
 
-typedef struct Paradero Paradero; // Forward declaration of Paradero
-typedef struct Edge Edge;         // Forward declaration of Edge
+//-------------------------------------------------------------------------------------
+
+typedef struct Paradero Paradero; 
+typedef struct Edge Edge;         
+
+Paradero *findParaderoById(sqlite3 *db, int id);
 
 typedef struct Usuario {
-    char nombre[50];
-    bool esAdmin;
+  char nombre[50];
+  bool esAdmin;
 } Usuario;
 
 typedef struct Horario {
-    char numeroBus[50];
-    char tiempoLlegada[6];
+  char numeroBus[50];
+  char tiempoLlegada[6];
 } Horario;
 
 typedef struct Paradero {
-    char nombreParadero[100];
-    int numeroParadero;
-    Horario** horariosParadero;
-    Edge** edges;  
-    int numEdges;  
-    int numHorarios;
+  char nombreParadero[100];
+  int numeroParadero;
+  Horario **horariosParadero;
+  Edge **edges;
+  int numEdges;
+  int numHorarios;
 } Paradero;
 
 struct Edge {
-    Paradero* startNode;
-    Paradero* endNode;
-    int distancia;
+  Paradero *startNode;
+  Paradero *endNode;
+  int distancia;
 };
 
 typedef struct Bus {
-    int numeroBus;
+  int numeroBus;
 } Bus;
 
 typedef struct Ruta {
-    int busRuta;
-    Paradero** paraderos;
-    int numParaderos;
+  int busRuta;
+  Paradero **paraderos;
+  int numParaderos;
 } Ruta;
 
-// Function para checkear si un .csv está vacío
-bool isCSVFileEmpty(const char *filePath) {
-    FILE *file = fopen(filePath, "r"); 
-    if (file == NULL) {
-        perror("Error al abrir el archivo");
-        return true; 
-    }
+//--------------------------  FUNCIONES AUXILIARES  -----------------------------------------------
 
-    fseek(file, 0, SEEK_END); 
-    long fileSize = ftell(file); 
-    fclose(file); 
+void cargarHorariosPorParadero(sqlite3 *db, Paradero *paradero,
+                               int paraderoKey) {
+  sqlite3_stmt *stmt;
+  const char *sql =
+      "SELECT BusID, ArrivalTime FROM Horarios WHERE ParaderoID = ?";
+  int result;
+  int index = 0;
 
-    return fileSize == 0;
-}
-
-void cargarUsuarios(Map *usuarios) {
-  FILE *archivo = fopen("data/usuarios.csv", "r");
-  if (archivo == NULL) {
-    perror("Error al abrir el archivo de usuarios.csv");
+  result = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+  if (result != SQLITE_OK) {
+    fprintf(stderr, "Failed to prepare select statement: %s\n",
+            sqlite3_errmsg(db));
     return;
   }
 
-  char **campos;
-  campos = leer_linea_csv(archivo, ',');
+  sqlite3_bind_int(stmt, 1, paraderoKey);
 
-  while ((campos = leer_linea_csv(archivo, ',')) != NULL) {
-    Usuario *usuario = (Usuario *)malloc(sizeof(Usuario));
-    strcpy(usuario->nombre, campos[0]);
+  paradero->horariosParadero = (Horario **)malloc(paradero->numHorarios * sizeof(Horario *));
 
-    if (strcmp(campos[2], "1") == 0) {
-      usuario->esAdmin = true;
-    } else {
-      usuario->esAdmin = false;
-    }
-    map_insert(usuarios, usuario->nombre, usuario);
+  while (sqlite3_step(stmt) == SQLITE_ROW) {
+    Horario *horario = (Horario *)malloc(sizeof(Horario));
+
+    strcpy(horario->numeroBus, (char *)sqlite3_column_text(stmt, 0));
+    strcpy(horario->tiempoLlegada, (char *)sqlite3_column_text(stmt, 1));
+
+    paradero->horariosParadero =realloc(paradero->horariosParadero, (paradero->numHorarios + 1) * sizeof(Horario *));
+    paradero->horariosParadero[index] = horario;
+    index++;
   }
-  fclose(archivo);
+
+  sqlite3_finalize(stmt);
 }
 
-Paradero** cargarParaderos(Paradero** paraderos, int* numNodes)
-{
-    FILE *archivo = fopen("data/paraderos.csv", "r"); 
-    if (archivo == NULL) {
-        perror("Error al abrir el archivo de paraderos.csv");
-        return NULL;
+/*
+  TODO: Replantear la forma en la que la función carga las direcciones de memoria
+  de los 'Edge's de cada nodo
+  
+*/
+
+void cargarEdgesPorParadero(sqlite3 *db, Paradero *paradero, int paraderoKey) {
+  sqlite3_stmt *stmt;
+  const char *sql = "SELECT StartParaderoID, EndParaderoID, Distance FROM Edges WHERE StartParaderoID = ? OR EndParaderoID = ?";
+  int result;
+  int index = 0;
+
+  result = sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+  if (result != SQLITE_OK) {
+    fprintf(stderr, "Failed to prepare select statement: %s\n",
+            sqlite3_errmsg(db));
+    return;
+  }
+
+  sqlite3_bind_int(stmt, 1, paraderoKey);
+  sqlite3_bind_int(stmt, 2, paraderoKey);
+
+  paradero->edges = (Edge **)malloc(paradero->numEdges * sizeof(Edge *));
+
+  while (sqlite3_step(stmt) == SQLITE_ROW) {
+    if (paradero->edges == NULL) {
+      paradero->edges = (Edge **)malloc(sizeof(Edge *));
+    } else {
+      paradero->edges =
+          realloc(paradero->edges, (paradero->numEdges + 1) * sizeof(Edge *));
     }
 
-    char **campos;
-    campos = leer_linea_csv(archivo, ',');
+    Edge *edge = (Edge *)malloc(sizeof(Edge));
+    // Assuming findParaderoById is implemented elsewhere
 
-    while ((campos = leer_linea_csv(archivo, ',')) != NULL)
-        {
-            Paradero *paradero = (Paradero *)malloc(sizeof(Paradero));
-            *paradero->nombreParadero = atoi(campos[0]);
-            paradero->numeroParadero = atoi(campos[1]);
-            
-            // Ver como hacerlo aca
-            paradero->horariosParadero = (Horario **)malloc(sizeof(Horario *));
-            paradero->edges = (Edge **)malloc(sizeof(Edge *));
+    /* Deben ser punteros a direcciones de memorias de los paraderos
+    edge->startNode = &startNode;
+    edge->endNode = &endNode;
+    */
+    
+    edge->distancia = sqlite3_column_int(stmt, 2);
 
-            paradero->numEdges = atoi(campos[4]);
-            paradero->numHorarios = atoi(campos[5]);
-            
-            paraderos[(*numNodes)] = paradero;
-            (*numNodes)++;
+    paradero->edges[index] = edge;
+    index++;
+  }
+
+  sqlite3_finalize(stmt);
+
+}
+
+void cargarParaderosPorRuta(sqlite3 *db, Ruta *ruta, int rutaKey) {
+    sqlite3_stmt *stmt;
+    int index = 0;
+    const char *sql = "SELECT ParaderoID FROM RouteParaderos WHERE RouteID = ?";
+    ruta->paraderos = (Paradero **)malloc(ruta->numParaderos * sizeof(Paradero*)); 
+    printf("Here");
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, rutaKey); 
+
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int paraderoID = sqlite3_column_int(stmt, 0); 
+
+            Paradero *paradero = findParaderoById(db, paraderoID);
+            ruta->paraderos[index] = paradero;
+            index++;
         }
-    fclose(archivo);
-    return paraderos;
+        sqlite3_finalize(stmt);
+    } else {
+        fprintf(stderr, "Failed to select data: %s\n", sqlite3_errmsg(db));
+    }
 }
 
-Bus** cargarBuses(Bus** buses, int* numBuses)
-{
-    FILE *archivo = fopen("data/buses.csv", "r"); 
-    if (archivo == NULL) {
-        perror("Error al abrir el archivo de buses.csv");
-        return NULL;
+Paradero *findParaderoById(sqlite3 *db, int id) {
+  const char *sql = "SELECT Name, Number, numEdges, numHorarios FROM Paraderos "
+                    "WHERE ParaderoID = ?";
+  sqlite3_stmt *stmt;
+  Paradero *paradero = NULL;
+
+  if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+    sqlite3_bind_int(stmt, 1, id);
+
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+      paradero = (Paradero *)malloc(sizeof(Paradero));
+      strncpy(paradero->nombreParadero, (char *)sqlite3_column_text(stmt, 0),
+              sizeof(paradero->nombreParadero) - 1);
+      paradero->nombreParadero[sizeof(paradero->nombreParadero) - 1] = '\0';
+      paradero->numeroParadero = sqlite3_column_int(stmt, 1);
+      paradero->numEdges = sqlite3_column_int(stmt, 2);
+      paradero->numHorarios = sqlite3_column_int(stmt, 3);
+
+      cargarHorariosPorParadero(db, paradero, id);
+      cargarEdgesPorParadero(db, paradero, id);
     }
 
-    char **campos;
-    campos = leer_linea_csv(archivo, ',');
+    sqlite3_finalize(stmt);
+  } else {
+    fprintf(stderr, "Failed to prepare select statement: %s\n",
+            sqlite3_errmsg(db));
+  }
 
-    while ((campos = leer_linea_csv(archivo, ',')) != NULL)
-        {
-            Bus *bus = (Bus *)malloc(sizeof(Bus));
-            bus->numeroBus = atoi(campos[1]);
-            buses[(*numBuses)] = bus;
-            (*numBuses)++;
-        }
-    fclose(archivo);
-    return buses;
+  return paradero;
 }
 
-Ruta** cargarRutas(Ruta** rutas, int* numRutas) {
-    FILE *archivo = fopen("data/rutas.csv", "r"); 
-    if (archivo == NULL) {
-        perror("Error al abrir el archivo de rutas.csv");
-        return NULL;
+//-------------------------------------------------------------------------------------
+
+void cargarUsuarios(Map *usuarios, sqlite3 *db) {
+  sqlite3_stmt *stmt;
+  const char *sql = "SELECT Name, isAdmin FROM Users";
+
+  if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+      Usuario *usuario = (Usuario *)malloc(sizeof(Usuario));
+      strcpy(usuario->nombre, (const char *)sqlite3_column_text(stmt, 0));
+      usuario->esAdmin = sqlite3_column_int(stmt, 1);
+      map_insert(usuarios, usuario->nombre, usuario);
     }
+    sqlite3_finalize(stmt);
+  } else {
+    fprintf(stderr, "Failed to select data: %s\n", sqlite3_errmsg(db));
+  }
+}
 
-    char **campos;
-    campos = leer_linea_csv(archivo, ',');
+Bus **cargarBuses(sqlite3 *db, int *numBuses) {
+  sqlite3_stmt *stmt;
+  const char *sql = "SELECT Number FROM Buses";
+  Bus **buses = NULL;
 
-    while ((campos = leer_linea_csv(archivo, ',')) != NULL)
-        {
+  if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+      buses = realloc(buses, (*numBuses + 1) * sizeof(Bus *));
+      Bus *bus = (Bus *)malloc(sizeof(Bus));
+      bus->numeroBus = sqlite3_column_int(stmt, 0);
+      buses[(*numBuses)] = bus;
+      (*numBuses)++;
+    }
+    sqlite3_finalize(stmt);
+  } else {
+    fprintf(stderr, "Failed to select data: %s\n", sqlite3_errmsg(db));
+  }
+
+  return buses;
+}
+
+Paradero **cargarParaderos(sqlite3 *db, int *numParaderos) {
+  sqlite3_stmt *stmt;
+  int paraderoKey;
+  const char *sql =
+      "SELECT ParaderoID, Name, Number, numEdges, numHorarios FROM Paraderos";
+  Paradero **paraderos = (Paradero**)malloc(100 * sizeof(Paradero*));
+
+  if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+
+      paraderoKey = sqlite3_column_int(
+          stmt, 0); 
+
+      paraderos = realloc(paraderos, (*numParaderos + 1) * sizeof(Paradero *));
+      Paradero *paradero = (Paradero *)malloc(sizeof(Paradero));
+
+      strcpy(paradero->nombreParadero, (char *)sqlite3_column_text(stmt, 1));
+      paradero->numeroParadero = sqlite3_column_int(stmt, 2);
+
+      paradero->numEdges = sqlite3_column_int(stmt, 3);
+      paradero->numHorarios = sqlite3_column_int(stmt, 4);
+
+      cargarHorariosPorParadero(db, paradero, paraderoKey);
+      cargarEdgesPorParadero(db, paradero, paraderoKey);
+
+      paraderos[(*numParaderos)] = paradero;
+      (*numParaderos)++;
+    }
+    sqlite3_finalize(stmt);
+  } else {
+    fprintf(stderr, "Failed to select data: %s\n", sqlite3_errmsg(db));
+  }
+
+  return paraderos;
+}
+
+Ruta** cargarRutas(sqlite3* db, int* numRutas) {
+    printf("Here\n");
+    sqlite3_stmt *stmt;
+    const char *sql = "SELECT RouteID, BusID, NumParaderos FROM Routes";
+    Ruta **rutas = (Ruta**)malloc(100 * sizeof(Ruta*));
+    printf("Here\n");
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int rutaKey = sqlite3_column_int(stmt, 0); 
+
+            rutas = realloc(rutas, (*numRutas + 1) * sizeof(Ruta*)); 
+          
             Ruta *ruta = (Ruta *)malloc(sizeof(Ruta));
-            ruta->busRuta = atoi(campos[0]);
+            ruta->busRuta = sqlite3_column_int(stmt, 1);
+            ruta->numParaderos = sqlite3_column_int(stmt, 2);
+            ruta->paraderos = (Paradero**)malloc(100 * sizeof(Paradero*));
+            printf("Here\n");
 
-            // Ver aca como hacerlo
-            /*
-            FILE *archivoHorario = fopen("data/horarios.csv", "r");
-            if (archivo == NULL) {
-                
-            }
-            */
-            ruta->paraderos = (Paradero **)malloc(sizeof(Paradero *));
-            
-            ruta->numParaderos = atoi(campos[2]);
-            rutas[(*numRutas)] = ruta;
-            (*numRutas)++;
+            cargarParaderosPorRuta(db, ruta, rutaKey); 
+
+            rutas[*numRutas] = ruta; 
+            (*numRutas)++; 
         }
-    fclose(archivo);
+        sqlite3_finalize(stmt);
+    } else {
+        fprintf(stderr, "Failed to select data: %s\n", sqlite3_errmsg(db));
+    }
+
     return rutas;
 }
+
+//-------------------------------------------------------------------------------------

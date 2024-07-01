@@ -2,21 +2,26 @@
 #define CARGAR_H
 
 #include <stdbool.h>
-
 typedef struct Map Map;
 
 typedef struct Paradero Paradero;
 typedef struct Bus Bus;
-typedef struct Rutas Rutas;
+typedef struct Ruta Ruta;
 
-void cargarUsuarios(Map *usuarios);
+typedef struct sqlite3 sqlite3;
+
+void cargarUsuarios(Map *usuarios, sqlite3 *db);
 
 // Carga las listas de entidades que usará el grafo
-Paradero** cargarParaderos(Paradero** paraderos, int* numNodes);
-Bus** cargarBuses(Bus** buses, int* numBuses);
-Rutas** cargarRutas(Rutas** rutas, int* numRutas);
+Paradero** cargarParaderos(sqlite3 *db, int* numParaderos);
+Bus** cargarBuses(sqlite3 *db, int* numBuses);
+Ruta** cargarRutas(sqlite3* db, int* numRutas);
 
-// Función que checkea si un archivo .csv está vacío
-bool isCSVFileEmpty(const char *filePath);
+Paradero* findParaderoById(sqlite3 *db, int id);
+
+// Para cargas las entidades anidadas desde la base de datos
+void cargarHorariosPorParadero(sqlite3 *db, Paradero *paradero, int paraderoKey);
+void cargarEdgesPorParadero(sqlite3 *db, Paradero *paradero, int paraderoKey);
+void cargarParaderosPorRuta(sqlite3* db, Ruta* ruta, int rutaKey);
 
 #endif

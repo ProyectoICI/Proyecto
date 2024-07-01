@@ -1,10 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
-// Include extra.h header
 #include "../tdas/extra.h"
 
-typedef struct Paradero Paradero; // Forward declaration of Paradero
-typedef struct Edge Edge;         // Forward declaration of Edge
+#include <sqlite3.h>
+
+//-------------------------------------------------------------------------------------
+
+typedef struct Paradero Paradero; 
+typedef struct Edge Edge;         
 
 typedef struct Horario {
   char numeroBus[50];
@@ -31,20 +34,76 @@ typedef struct Graph {
   int numNodes;
 } Graph;
 
-void agregarParadero(Graph *graph) {
-  Paradero *paradero = (Paradero *)malloc(sizeof(Paradero));
-  printf("Ingrese el nombre del paradero: ");
-  scanf("%s", paradero->nombreParadero);
-  printf("Ingrese el número del paradero: ");
-  scanf("%d", &paradero->numeroParadero);
+//-------------------------------------------------------------------------------------
 
+
+void agregarParadero(sqlite3* db, Graph *graph) {
+  Paradero *paradero = (Paradero *)malloc(sizeof(Paradero));
+  int numero;
+  int numNodesGraph;
+  if (!paradero) {
+      printf("Error al asignar memoria para el paradero.\n");
+      return;
+  }
+  paradero->numeroParadero = 0;
   paradero->horariosParadero = NULL;
   paradero->edges = NULL;
+  paradero->numHorarios = 0;
   paradero->numEdges = 0;
 
-  graph->nodes[graph->numNodes++] = paradero;
+  printf("Ingrese el nombre del paradero: \n");
+  scanf("%s", paradero->nombreParadero); 
 
-  printf("Paradero agregado con éxito.\n");
+  printf("Ingrese el número del paradero: \n");
+  scanf("%d", &numero);
+
+  paradero->numeroParadero = numero;
+
+
+  const char *checkSql = "SELECT * FROM Paraderos WHERE Number = ?";
+  sqlite3_stmt *checkStmt;
+  if (sqlite3_prepare_v2(db, checkSql, -1, &checkStmt, NULL) != SQLITE_OK) {
+    printf("Failed to prepare check statement\n");
+    presioneTeclaParaContinuar();
+    return;
+  }
+
+  sqlite3_bind_int(checkStmt, 1, paradero->numeroParadero);
+
+  if (sqlite3_step(checkStmt) == SQLITE_ROW) {
+    printf("Paradero '%d' ya existe.\n", paradero->numeroParadero);
+    sqlite3_finalize(checkStmt);
+    presioneTeclaParaContinuar();
+
+    return;
+  }
+  sqlite3_finalize(checkStmt);
+
+  numNodesGraph = graph->numNodes;
+  graph->nodes[numNodesGraph] = paradero;
+  graph->numNodes++;
+
+  const char *sql = "INSERT INTO Paraderos (Name, Number, numEdges, numHorarios) VALUES (?, ?, ?, ?)";
+  sqlite3_stmt *stmt;
+  if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+    printf("Failed to prepare statement\n");
+    presioneTeclaParaContinuar();
+
+    return;
+  }
+
+  sqlite3_bind_text(stmt, 1, paradero->nombreParadero, -1, SQLITE_STATIC);
+  sqlite3_bind_int(stmt, 2, paradero->numeroParadero);
+  sqlite3_bind_int(stmt, 3, paradero->numEdges); 
+  sqlite3_bind_int(stmt, 4, paradero->numHorarios);
+
+  if (sqlite3_step(stmt) != SQLITE_DONE) {
+    printf("Failed to execute statement: %s\n", sqlite3_errmsg(db));
+    presioneTeclaParaContinuar();
+
+  } 
+
+  sqlite3_finalize(stmt);
 }
 
 void editarParadero(Graph *graph) {
@@ -69,6 +128,7 @@ void editarParadero(Graph *graph) {
 void listaDeParaderos(Graph *graph) {
   if (graph->numNodes == 0) {
     printf("No hay paraderos para mostrar.\n");
+    presioneTeclaParaContinuar();
     return;
   }
 
@@ -79,3 +139,5 @@ void listaDeParaderos(Graph *graph) {
   }
   presioneTeclaParaContinuar();
 }
+
+//-------------------------------------------------------------------------------------

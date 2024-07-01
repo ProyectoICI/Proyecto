@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+//-------------------------------------------------------------------------------------
+
 typedef struct Paradero Paradero; 
 typedef struct Edge Edge;         
 
@@ -35,6 +37,9 @@ typedef struct PriorityQueue {
     int capacity; 
 } PriorityQueue;
 
+//-------------------------------------------------------------------------------------
+
+
 void pqInsert(PriorityQueue* pq, Paradero* paradero, int priority) {
   printf("pqInsert\n");
 }
@@ -54,3 +59,5 @@ void pqFree(PriorityQueue* pq) {
 Paradero* pqExtractMin(PriorityQueue* pq) {
   return NULL;
 }
+
+//-------------------------------------------------------------------------------------

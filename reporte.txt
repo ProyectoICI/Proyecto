@@ -1,3 +1,66 @@
 Reporte de Rutas:
 =================
 
+Ruta del Bus: 101
+N√∫mero de Paraderos: 6
+  Paradero: Vi√±a (N√∫mero: 0)
+  Horarios de Llegada:
+    Bus: Ω∆›, Hora de Llegada: 08:30
+    Bus: -Œ›, Hora de Llegada: 09:00
+    Bus: «, Hora de Llegada: 10:00
+  Edges:
+    De: Vi√±a a Quilpue, Distancia: 23
+    De: Vi√±a a Quilpue, Distancia: 700000
+    De: Vi√±a a Quilpue, Distancia: 700000
+
+  Paradero: Quilpue (N√∫mero: 1)
+  Horarios de Llegada:
+    Bus: »›, Hora de Llegada: 09:00
+    Bus: ›h‹, Hora de Llegada: 10:00
+    Bus: , Hora de Llegada: 11:00
+  Edges:
+    De: Quilpue a Vi√±a, Distancia: 23
+    De: Quilpue a Vi√±a, Distancia: 700000
+    De: Quilpue a Vi√±a, Distancia: 700000
+
+  Paradero: Vi√±a (N√∫mero: 0)
+  Horarios de Llegada:
+    Bus: Ω∆›, Hora de Llegada: 08:30
+    Bus: -Œ›, Hora de Llegada: 09:00
+    Bus: «, Hora de Llegada: 10:00
+  Edges:
+    De: Vi√±a a Quilpue, Distancia: 23
+    De: Vi√±a a Quilpue, Distancia: 700000
+    De: Vi√±a a Quilpue, Distancia: 700000
+
+  Paradero: Quilpue (N√∫mero: 1)
+  Horarios de Llegada:
+    Bus: »›, Hora de Llegada: 09:00
+    Bus: ›h‹, Hora de Llegada: 10:00
+    Bus: , Hora de Llegada: 11:00
+  Edges:
+    De: Quilpue a Vi√±a, Distancia: 23
+    De: Quilpue a Vi√±a, Distancia: 700000
+    De: Quilpue a Vi√±a, Distancia: 700000
+
+  Paradero: Vi√±a (N√∫mero: 0)
+  Horarios de Llegada:
+    Bus: Ω∆›, Hora de Llegada: 08:30
+    Bus: -Œ›, Hora de Llegada: 09:00
+    Bus: «, Hora de Llegada: 10:00
+  Edges:
+    De: Vi√±a a Quilpue, Distancia: 23
+    De: Vi√±a a Quilpue, Distancia: 700000
+    De: Vi√±a a Quilpue, Distancia: 700000
+
+  Paradero: Quilpue (N√∫mero: 1)
+  Horarios de Llegada:
+    Bus: »›, Hora de Llegada: 09:00
+    Bus: ›h‹, Hora de Llegada: 10:00
+    Bus: , Hora de Llegada: 11:00
+  Edges:
+    De: Quilpue a Vi√±a, Distancia: 23
+    De: Quilpue a Vi√±a, Distancia: 700000
+    De: Quilpue a Vi√±a, Distancia: 700000
+
+---------------------------
